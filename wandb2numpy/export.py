@@ -14,6 +14,7 @@ def export_data(config: Dict,
                 experiments_list: List[str] = None,
                 from_command_line: bool = False,
                 by_group_and_job_type: bool = False,
+                padding_method: str = 'nan',
                 ) -> Tuple[Dict[str, any], List[Dict]]:
     """Exports data to numpy or pandas, according to specifications provided in the config dictionary
     Arguments:
@@ -21,6 +22,7 @@ def export_data(config: Dict,
         experiment_list {List[str]} -- a list of experiments to be exported. If None, all experiments are exported.
         from_command_line {bool} -- ?
         by_group_and_job_type {bool} -- If true, the runs are grouped by wandb group name and job type
+        padding_method {str} -- if runs haven't finished, pad run with nan or last value
     Returns:
         experiment_data_dict {dict} -- One top-level entry per exported experiment. On the next level, one entry per exported field.
         Value for each field is either a pandas dataframe or a numpy array, 
@@ -65,11 +67,11 @@ def export_data(config: Dict,
             out = util.nested_dict(dict)
             for group_name, group_runs in all_runs_dict.items():
                 for job_type, runs in group_runs.items():
-                    field_dict = util.run_dict_to_field_dict({k: v for k, v in enumerate(runs)}, config)
+                    field_dict = util.run_dict_to_field_dict({k: v for k, v in enumerate(runs)}, config, padding_method)
                     out[group_name][job_type] = field_dict
             experiment_data_dict[experiment_names[i]] = util.default_to_regular(out)
         else:
-            field_dict = util.run_dict_to_field_dict(all_runs_dict, config)
+            field_dict = util.run_dict_to_field_dict(all_runs_dict, config, padding_method)
             experiment_data_dict[experiment_names[i]] = field_dict
 
     return experiment_data_dict, config_list

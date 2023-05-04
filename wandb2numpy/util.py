@@ -66,7 +66,7 @@ def extract_data(run, fields, config):
     return data_dict
 
 
-def run_dict_to_field_dict(run_dict, config):
+def run_dict_to_field_dict(run_dict, config, padding_method):
     n_runs = len(run_dict)
     output_dict = {}
     all_fields = set()
@@ -88,7 +88,7 @@ def run_dict_to_field_dict(run_dict, config):
             if steps == max_steps: # check if array has length max_steps, otherwise pad to that size with NaNs (in the end)
                 output_array[k] = run
             else:
-                output_array[k] = pad_run(run, max_steps)
+                output_array[k] = pad_run(run, max_steps, padding_method)
         if "output_data_type" in config.keys() and config["output_data_type"] == "csv":
             row_names = [f"run {i}" for i in range(0, output_array.shape[0])]
             column_names = [f"step {i}" for i in range(0, output_array.shape[1])]
@@ -99,10 +99,16 @@ def run_dict_to_field_dict(run_dict, config):
     return output_dict
 
 
-def pad_run(array, max_steps):
+def pad_run(array, max_steps, method='nan'):
     steps = array.shape[0]
+    if method == 'nan':
+        pad_value = np.nan
+    elif method == 'last':
+        pad_value = array[-1]
+    else:
+        raise ValueError(f'Unknown padding method {method}')
     print(f"Warning: Run has {max_steps - steps} steps less than longest run, padding array with NaNs")
-    return np.pad(array.astype('float64'), (0, max_steps - steps), 'constant', constant_values=np.nan)
+    return np.pad(array.astype('float64'), (0, max_steps - steps), 'constant', constant_values=pad_value)
 
 
 def deep_update(base_dict: dict, update_dict: dict) -> dict:
